@@ -8,40 +8,43 @@ import { AuthService } from '../auth.service';
   standalone: true,
   imports: [CommonModule, FormsModule],
   template: `
-    <div class="min-h-screen flex items-center justify-center p-6">
-      <div class="w-full max-w-md rounded-lg border p-6 shadow-sm bg-white">
-        <h1 class="text-2xl font-semibold mb-4">Dashboard Login</h1>
+    <div class="login-page">
+      <div class="login-card">
+        <div class="login-header">
+          <div class="login-badge">Secure Task Management System</div>
+          <h1 class="login-title">Welcome back</h1>
+          <p class="login-subtitle">Sign in to manage your tasks securely.</p>
+        </div>
 
-        <label class="block text-sm mb-1">Email</label>
-        <input class="w-full border rounded px-3 py-2 mb-3"
-               [(ngModel)]="email" />
+        <div class="login-form">
+          <label class="login-label">Email</label>
+          <input class="login-input"
+                placeholder="you@example.com"
+                [(ngModel)]="email" />
 
-        <label class="block text-sm mb-1">Password</label>
-        <input type="password"
-               class="w-full border rounded px-3 py-2 mb-4"
-               [(ngModel)]="password" />
+          <label class="login-label">Password</label>
+          <input type="password"
+                class="login-input"
+                placeholder="••••••••"
+                [(ngModel)]="password" />
 
-        <button class="w-full rounded px-3 py-2 bg-black text-white disabled:opacity-60"
-                (click)="onLogin()"
-                [disabled]="loading">
-          {{ loading ? 'Logging in…' : 'Login' }}
-        </button>
+          <button class="login-button"
+                  (click)="onLogin()"
+                  [disabled]="loading">
+            <span *ngIf="!loading">Login</span>
+            <span *ngIf="loading">Logging in…</span>
+          </button>
 
-        <p class="text-sm text-red-600 mt-3" *ngIf="error">{{ error }}</p>
-
-        <div class="text-xs text-gray-500 mt-4 space-y-1">
-          <div>owner@test.com</div>
-          <div>admin@test.com</div>
-          <div>viewer@test.com</div>
-          <div>Password: <span class="font-mono">password</span></div>
+          <p class="login-error" *ngIf="error">{{ error }}</p>
         </div>
       </div>
     </div>
   `,
+  styleUrls: ['./login.component.css'],
 })
 export class LoginComponent {
-  email = 'owner@test.com';
-  password = 'password';
+  email = '';
+  password = '';
   loading = false;
   error = '';
 
