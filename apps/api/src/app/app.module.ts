@@ -31,7 +31,6 @@ import { AuditLog } from './entities/audit-log.entity';
     AuditModule,
     TypeOrmModule.forFeature([User, Organization, AuditLog]),
 
-
     TypeOrmModule.forFeature([User, Organization]),
 
     UsersModule,

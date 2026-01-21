@@ -9,7 +9,6 @@ import { AuthService } from '../../auth/auth.service';
 
 type Column = { id: string; key: TaskStatus; title: string; items: Task[] };
 
-
 @Component({
   standalone: true,
   imports: [CommonModule, FormsModule, DragDropModule],
@@ -48,11 +47,16 @@ type Column = { id: string; key: TaskStatus; title: string; items: Task[] };
             </select>
 
             <div class="flex gap-2 lg:col-span-2">
-              <button class="flex-1 rounded px-3 py-2 bg-black text-white disabled:opacity-60"
+              <button
+                class="flex-1 rounded px-3 py-2 bg-black text-white disabled:opacity-60"
                 (click)="create()"
-                [disabled]="saving || !title || !category">
+                [disabled]="saving || !title || !category || !canWrite">
                 {{ saving ? 'Saving…' : 'Create' }}
               </button>
+
+              <p class="text-xs text-gray-500 mt-2" *ngIf="!canWrite">
+                You have Viewer access (read-only).
+              </p>
 
               <button class="rounded px-3 py-2 border"
                 (click)="load()">
@@ -119,6 +123,7 @@ type Column = { id: string; key: TaskStatus; title: string; items: Task[] };
               (cdkDropListDropped)="drop(col.key, $event)">
               <div *ngFor="let t of col.items; trackBy: trackById"
                    cdkDrag
+                   [cdkDragDisabled]="!canWrite"
                    class="mb-3 last:mb-0 rounded border bg-white p-3 shadow-sm">
                 <div class="flex items-start justify-between gap-3">
                   <div class="min-w-0">
@@ -127,8 +132,8 @@ type Column = { id: string; key: TaskStatus; title: string; items: Task[] };
                     <div class="text-sm text-gray-500 mt-1" *ngIf="t.description">{{ t.description }}</div>
                   </div>
                   <div class="flex gap-3">
-                    <button class="text-sm underline" (click)="startEdit(t)">Edit</button>
-                    <button class="text-sm text-red-600 underline" (click)="remove(t.id)">Delete</button>
+                    <button class="text-sm underline" *ngIf="canWrite" (click)="startEdit(t)">Edit</button>
+                    <button class="text-sm text-red-600 underline" *ngIf="canWrite" (click)="remove(t.id)">Delete</button>
                   </div>
                 </div>
               </div>
@@ -175,7 +180,6 @@ export class TasksPageComponent {
     { id: 'doneList', key: 'Done', title: 'Done', items: [] },
   ];
 
-
   constructor(
     private tasksSvc: TasksService,
     private auth: AuthService,
@@ -200,6 +204,10 @@ export class TasksPageComponent {
     return this.columns.map((c) => c.id);
   }
 
+  get canWrite() {
+    return this.auth.isAdminLike(); // Owner/Admin
+  }
+
   trackById(_: number, t: Task) {
     return t.id;
   }
@@ -220,11 +228,9 @@ export class TasksPageComponent {
   }
 
   rebuildColumns() {
-    // keep the same arrays (important for CDK)
     for (const col of this.columns) col.items.length = 0;
 
     const sorted = [...this.tasks].sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
-
     for (const t of sorted) {
       const col = this.columns.find(c => c.key === t.status) ?? this.columns[0];
       col.items.push(t);
@@ -354,7 +360,6 @@ export class TasksPageComponent {
         },
       });
   }
-
 
   logout() {
     this.auth.logout();
