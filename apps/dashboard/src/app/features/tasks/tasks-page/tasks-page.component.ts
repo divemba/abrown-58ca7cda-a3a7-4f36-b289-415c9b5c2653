@@ -288,33 +288,78 @@ export class TasksPageComponent {
   }
 
   create() {
+    if (!this.title || !this.category) return;
+
     this.saving = true;
     this.error = '';
 
-    this.tasksSvc.create({
+    // Optimistic task (temporary id)
+    const tempId = -Date.now();
+    const optimistic: Task = {
+      id: tempId,
       title: this.title,
       category: this.category,
       description: this.description || undefined,
       status: 'Todo',
-    }).subscribe({
-      next: () => {
-        this.title = '';
-        this.category = '';
-        this.description = '';
-        this.load();
-      },
-      error: (e) => {
-        this.error = e?.error?.message ?? 'Failed to create task (are you Viewer?)';
-        this.saving = false;
-      },
-      complete: () => (this.saving = false),
-    });
+      order: 0,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+
+    // Optimistically add to local state
+    const prevTasks = [...this.tasks];
+    this.tasks = [optimistic, ...this.tasks];
+    this.rebuildColumns();
+
+    const title = this.title;
+    const category = this.category;
+    const description = this.description || undefined;
+
+    this.title = '';
+    this.category = '';
+    this.description = '';
+
+    this.tasksSvc
+      .create({
+        title,
+        category,
+        description,
+        status: 'Todo',
+      })
+      .pipe(finalize(() => (this.saving = false)))
+      .subscribe({
+        next: (created) => {
+          this.tasks = this.tasks.map((t) => (t.id === tempId ? created : t));
+          this.rebuildColumns();
+        },
+        error: (e) => {
+          this.tasks = prevTasks;
+          this.rebuildColumns();
+
+          this.error = e?.error?.message ?? 'Failed to create task (are you Viewer?)';
+        },
+      });
   }
 
   remove(id: number) {
+    this.error = '';
+
+    // Optimistically remove from UI
+    const prevTasks = [...this.tasks];
+    this.tasks = this.tasks.filter((t) => t.id !== id);
+    this.rebuildColumns();
+
     this.tasksSvc.remove(id).subscribe({
-      next: () => this.load(),
-      error: (e) => (this.error = e?.error?.message ?? 'Failed to delete task'),
+      next: () => {
+        // nothing else needed — UI already updated
+      },
+      error: (e) => {
+        // Roll back
+        this.tasks = prevTasks;
+        this.rebuildColumns();
+
+        this.error = e?.error?.message ?? 'Failed to delete task';
+      },
     });
   }
 
