@@ -13,144 +13,194 @@ type Column = { id: string; key: TaskStatus; title: string; items: Task[] };
   standalone: true,
   imports: [CommonModule, FormsModule, DragDropModule],
   template: `
-    <div class="min-h-screen p-4 sm:p-6 bg-gray-50">
-      <div class="max-w-6xl mx-auto">
-        <div class="flex items-center justify-between mb-4">
-          <h1 class="text-2xl font-semibold">Task Dashboard</h1>
-          <button class="text-sm underline" (click)="logout()">Logout</button>
+    <div class="page">
+      <div class="shell">
+        <!-- Topbar -->
+        <div class="topbar">
+          <div class="topbar-left">
+            <div class="brand">Task Board</div>
+            <div class="subtitle">A simplified Task management board</div>
+          </div>
+
+          <div class="topbar-right">
+            <span class="role-pill" [class.readonly]="!canWrite">
+              {{ canWrite ? 'Owner/Admin' : 'Viewer (read-only)' }}
+            </span>
+            <button class="link-btn" (click)="logout()">Logout</button>
+          </div>
         </div>
 
         <!-- Create + Filters -->
-        <div class="rounded-lg border bg-white p-4 mb-4">
-          <div class="grid gap-3 lg:grid-cols-6">
-            <input class="border rounded px-3 py-2 lg:col-span-2"
-              placeholder="Title" [(ngModel)]="title" />
+        <div class="panel">
+          <div class="panel-grid">
+            <div class="field lg-2">
+              <label class="label">Title</label>
+              <input
+                class="input"
+                placeholder="Add a title…"
+                [(ngModel)]="title"
+              />
+            </div>
 
-            <input class="border rounded px-3 py-2 lg:col-span-2"
-              placeholder="Category (Work/Personal)" [(ngModel)]="category" />
+            <div class="field lg-2">
+              <label class="label">Category</label>
+              <input
+                class="input"
+                placeholder="Work / Personal"
+                [(ngModel)]="category"
+              />
+            </div>
 
-            <input class="border rounded px-3 py-2 lg:col-span-2"
-              placeholder="Description (optional)" [(ngModel)]="description" />
+            <div class="field lg-2">
+              <label class="label">Description</label>
+              <input
+                class="input"
+                placeholder="Optional…"
+                [(ngModel)]="description"
+              />
+            </div>
 
-            <select class="border rounded px-3 py-2 lg:col-span-2"
-              [(ngModel)]="filterCategory">
-              <option value="">All categories</option>
-              <option *ngFor="let c of categories" [value]="c">{{ c }}</option>
-            </select>
+            <div class="field lg-2">
+              <label class="label">Filter Category</label>
+              <select class="select" [(ngModel)]="filterCategory">
+                <option value="">All categories</option>
+                <option *ngFor="let c of categories" [value]="c">{{ c }}</option>
+              </select>
+            </div>
 
-            <select class="border rounded px-3 py-2 lg:col-span-2"
-              [(ngModel)]="filterStatus">
-              <option value="">All statuses</option>
-              <option value="Todo">Todo</option>
-              <option value="InProgress">In Progress</option>
-              <option value="Done">Done</option>
-            </select>
+            <div class="field lg-2">
+              <label class="label">Filter Status</label>
+              <select class="select" [(ngModel)]="filterStatus">
+                <option value="">All statuses</option>
+                <option value="Todo">Todo</option>
+                <option value="InProgress">In Progress</option>
+                <option value="Done">Done</option>
+              </select>
+            </div>
 
-            <div class="flex gap-2 lg:col-span-2">
+            <div class="actions lg-2">
               <button
-                class="flex-1 rounded px-3 py-2 bg-black text-white disabled:opacity-60"
+                class="btn primary"
                 (click)="create()"
-                [disabled]="saving || !title || !category || !canWrite">
+                [disabled]="saving || !title || !category || !canWrite"
+              >
                 {{ saving ? 'Saving…' : 'Create' }}
               </button>
 
-              <p class="text-xs text-gray-500 mt-2" *ngIf="!canWrite">
-                You have Viewer access (read-only).
-              </p>
-
-              <button class="rounded px-3 py-2 border"
-                (click)="load()">
-                Refresh
-              </button>
+              <button class="btn ghost" (click)="load()">Refresh</button>
             </div>
           </div>
 
-          <p class="text-sm text-red-600 mt-2" *ngIf="error">{{ error }}</p>
+          <p class="hint" *ngIf="!canWrite">
+            You have Viewer access — you can view tasks but can’t create/edit/delete.
+          </p>
+
+          <p class="error" *ngIf="error">{{ error }}</p>
         </div>
 
         <!-- Edit panel -->
-        <div *ngIf="editing" class="rounded-lg border bg-white p-4 mb-4">
-          <div class="flex items-center justify-between mb-3">
-            <div class="font-medium">Edit Task #{{ editing.id }}</div>
-            <button class="text-sm underline" (click)="cancelEdit()">Close</button>
+        <div *ngIf="editing" class="panel panel-edit">
+          <div class="panel-head">
+            <div class="panel-title">Edit Task #{{ editing.id }}</div>
+            <button class="link-btn" (click)="cancelEdit()">Close</button>
           </div>
 
-          <div class="grid gap-3 lg:grid-cols-6">
-            <input class="border rounded px-3 py-2 lg:col-span-2"
-              placeholder="Title" [(ngModel)]="editTitle" />
+          <div class="panel-grid">
+            <div class="field lg-2">
+              <label class="label">Title</label>
+              <input class="input" [(ngModel)]="editTitle" />
+            </div>
 
-            <input class="border rounded px-3 py-2 lg:col-span-2"
-              placeholder="Category" [(ngModel)]="editCategory" />
+            <div class="field lg-2">
+              <label class="label">Category</label>
+              <input class="input" [(ngModel)]="editCategory" />
+            </div>
 
-            <input class="border rounded px-3 py-2 lg:col-span-2"
-              placeholder="Description" [(ngModel)]="editDescription" />
+            <div class="field lg-2">
+              <label class="label">Description</label>
+              <input class="input" [(ngModel)]="editDescription" />
+            </div>
 
-            <select class="border rounded px-3 py-2 lg:col-span-2"
-              [(ngModel)]="editStatus">
-              <option value="Todo">Todo</option>
-              <option value="InProgress">In Progress</option>
-              <option value="Done">Done</option>
-            </select>
+            <div class="field lg-2">
+              <label class="label">Status</label>
+              <select class="select" [(ngModel)]="editStatus">
+                <option value="Todo">Todo</option>
+                <option value="InProgress">In Progress</option>
+                <option value="Done">Done</option>
+              </select>
+            </div>
 
-            <div class="lg:col-span-4 flex gap-2">
-              <button class="rounded px-3 py-2 bg-black text-white disabled:opacity-60"
+            <div class="actions lg-2">
+              <button
+                class="btn primary"
                 (click)="saveEdit()"
-                [disabled]="savingEdit || !editTitle || !editCategory">
+                [disabled]="savingEdit || !editTitle || !editCategory"
+              >
                 {{ savingEdit ? 'Saving…' : 'Save changes' }}
               </button>
 
-              <button class="rounded px-3 py-2 border" (click)="cancelEdit()">Cancel</button>
+              <button class="btn ghost" (click)="cancelEdit()">Cancel</button>
             </div>
           </div>
 
-          <p class="text-sm text-red-600 mt-2" *ngIf="editError">{{ editError }}</p>
+          <p class="error" *ngIf="editError">{{ editError }}</p>
         </div>
 
-
         <!-- Board -->
-        <div class="grid gap-4 lg:grid-cols-3">
-          <div *ngFor="let col of columns" class="rounded-lg border bg-white">
-            <div class="p-3 border-b flex items-center justify-between">
-              <div class="font-medium">{{ col.title }}</div>
-              <div class="text-xs text-gray-500">{{ col.items.length }}</div>
+        <div class="board">
+          <div
+            *ngFor="let col of columns"
+            class="column"
+            [attr.data-status]="col.key"
+          >
+            <div class="col-head">
+              <div class="col-title">{{ col.title }}</div>
+              <div class="count">{{ col.items.length }}</div>
             </div>
 
-            <div class="p-3 min-h-[200px]"
+            <div
+              class="dropzone"
               cdkDropList
               [id]="col.id"
               [cdkDropListData]="col.items"
               [cdkDropListConnectedTo]="connectedIds"
-              (cdkDropListDropped)="drop(col.key, $event)">
-              <div *ngFor="let t of col.items; trackBy: trackById"
-                   cdkDrag
-                   [cdkDragDisabled]="!canWrite"
-                   class="mb-3 last:mb-0 rounded border bg-white p-3 shadow-sm">
-                <div class="flex items-start justify-between gap-3">
-                  <div class="min-w-0">
-                    <div class="font-medium truncate">{{ t.title }}</div>
-                    <div class="text-sm text-gray-600">{{ t.category }}</div>
-                    <div class="text-sm text-gray-500 mt-1" *ngIf="t.description">{{ t.description }}</div>
-                  </div>
-                  <div class="flex gap-3">
-                    <button class="text-sm underline" *ngIf="canWrite" (click)="startEdit(t)">Edit</button>
-                    <button class="text-sm text-red-600 underline" *ngIf="canWrite" (click)="remove(t.id)">Delete</button>
+              (cdkDropListDropped)="drop(col.key, $event)"
+            >
+              <div
+                *ngFor="let t of col.items; trackBy: trackById"
+                cdkDrag
+                [cdkDragDisabled]="!canWrite"
+                class="card"
+                [class.readonly]="!canWrite"
+              >
+                <div class="card-top">
+                  <div class="card-title">{{ t.title }}</div>
+
+                  <div class="card-actions" *ngIf="canWrite">
+                    <button class="icon-btn" (click)="startEdit(t)">Edit</button>
+                    <button class="icon-btn danger" (click)="remove(t.id)">Delete</button>
                   </div>
                 </div>
+
+                <div class="card-meta">
+                  <span class="tag">{{ t.category }}</span>
+                  <span class="dot">•</span>
+                  <span class="muted">#{{ t.id }}</span>
+                </div>
+
+                <div class="card-desc" *ngIf="t.description">{{ t.description }}</div>
               </div>
 
-              <div class="text-sm text-gray-400" *ngIf="col.items.length === 0">
+              <div class="empty" *ngIf="col.items.length === 0">
                 Drop tasks here
               </div>
             </div>
           </div>
         </div>
-
-        <p class="text-xs text-gray-500 mt-4">
-          Tip: Drag tasks between columns to change status, and within a column to reorder.
-        </p>
       </div>
     </div>
   `,
+  styleUrl: './tasks-page.component.css',
 })
 export class TasksPageComponent {
   tasks: Task[] = [];
