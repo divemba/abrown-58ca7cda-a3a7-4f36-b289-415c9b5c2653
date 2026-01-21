@@ -1,0 +1,9 @@
+{
+  "name": "@abrown-58ca7cda-a3a7-4f36-b289-415c9b5c2653/auth",
+  "version": "0.0.1",
+  "private": true,
+  "type": "commonjs",
+  "main": "./index.cjs",
+  "types": "./index.d.ts",
+  "dependencies": {}
+}
