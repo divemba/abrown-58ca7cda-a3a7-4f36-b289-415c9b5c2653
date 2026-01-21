@@ -1,12 +1,41 @@
+import { IsEnum, IsInt, IsOptional, IsString, Min } from 'class-validator';
 import { TaskStatus } from '../entities/task.entity';
 
-export type CreateTaskDto = {
-  title: string;
-  description?: string;
-  category: string;
-  status?: TaskStatus;
-};
+export class CreateTaskDto {
+  @IsString()
+  title!: string;
 
-export type UpdateTaskDto = Partial<CreateTaskDto> & {
+  @IsOptional()
+  @IsString()
+  description?: string;
+
+  @IsString()
+  category!: string;
+
+  @IsOptional()
+  @IsEnum(TaskStatus)
+  status?: TaskStatus;
+}
+
+export class UpdateTaskDto {
+  @IsOptional()
+  @IsString()
+  title?: string;
+
+  @IsOptional()
+  @IsString()
+  description?: string;
+
+  @IsOptional()
+  @IsString()
+  category?: string;
+
+  @IsOptional()
+  @IsEnum(TaskStatus)
+  status?: TaskStatus;
+
+  @IsOptional()
+  @IsInt()
+  @Min(0)
   order?: number;
-};
+}
