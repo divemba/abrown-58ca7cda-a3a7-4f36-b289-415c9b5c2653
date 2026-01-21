@@ -11,6 +11,7 @@ import { UsersModule } from './users/users.module';
 import { SeedService } from './seed.service';
 import { User } from './entities/user.entity';
 import { Organization } from './entities/organization.entity';
+import { TasksModule } from './tasks/tasks.module';
 
 @Module({
   imports: [
@@ -25,11 +26,13 @@ import { Organization } from './entities/organization.entity';
 
     UsersModule,
     AuthModule,
+    TasksModule,
   ],
   providers: [
     SeedService,
 
     { provide: APP_GUARD, useClass: JwtAuthGuard },
+    { provide: APP_GUARD, useClass: PermissionsGuard },
   ],
 })
 export class AppModule {}
